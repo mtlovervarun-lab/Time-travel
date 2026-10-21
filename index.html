@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROJECT STRATOSPHERE // The Bruised Sky</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            veil: {
+              950: '#07090d',
+              900: '#0c1017',
+              850: '#111722',
+              800: '#17202f',
+              700: '#222f44',
+              zinc: '#768294',
+              palezinc: '#9aa5b5',
+              sulfur: '#d4a237',
+              amber: '#f59e0b',
+              crimson: '#ef4444',
+              cyan: '#38bdf8',
+              azure: '#1d4ed8'
+            }
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"Space Mono"', 'monospace'],
+            sans: ['"Inter"', 'sans-serif'],
+            display: ['"Orbitron"', '"Cinzel"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c1017; }
+    ::-webkit-scrollbar-thumb { background: #222f44; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #d4a237; }
+
+    /* CRT Scanline & Grain Effects */
+    .scanlines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+    }
+
+    .crt-glow {
+      text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    }
+
+    .amber-glow {
+      text-shadow: 0 0 10px rgba(212, 162, 55, 0.5);
+    }
+
+    .red-glow {
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+    }
+
+    .zinc-glow {
+      box-shadow: inset 0 0 50px rgba(118, 130, 148, 0.2);
+    }
+
+    /* Range slider styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #17202f;
+      height: 6px;
+      border-radius: 3px;
+      border: 1px solid #222f44;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #d4a237;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(212, 162, 55, 0.8);
+      border: 2px solid #0c1017;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      background: #f59e0b;
+    }
+
+    /* Comparison Slider */
+    .compare-wrapper {
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+    .compare-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      overflow: hidden;
+      border-right: 2px solid #d4a237;
+      box-shadow: 0 0 15px rgba(212, 162, 55, 0.7);
+    }
+
+    @keyframes pulseHaze {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.95; }
+    }
+    .animate-haze {
+      animation: pulseHaze 8s ease-in-out infinite;
+    }
+
+    @keyframes alarmPulse {
+      0%, 100% { background-color: rgba(239, 68, 68, 0.05); }
+      50% { background-color: rgba(239, 68, 68, 0.22); }
+    }
+    .alarm-active {
+      animation: alarmPulse 1.2s infinite;
+      border-color: #ef4444 !important;
+    }
+  </style>
+</head>
+<body class="bg-veil-950 text-gray-200 font-sans min-h-screen flex flex-col selection:bg-veil-sulfur/30 selection:text-white">
+
+  <!-- Scanlines layer -->
+  <div class="fixed inset-0 scanlines z-50 pointer-events-none"></div>
+
+  <!-- Audio Initial Consent Prompt / Status Bar -->
+  <header class="border-b border-veil-800 bg-veil-900/90 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Chrono-Link Info -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded bg-veil-850 border border-veil-sulfur/50 flex items-center justify-center relative overflow-hidden">
+          <div class="w-3.5 h-3.5 rounded-full bg-veil-sulfur/80 animate-ping absolute"></div>
+          <svg class="w-5 h-5 text-veil-sulfur relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-6.5l-1.4 1.4m-10.2 10.2l-1.4 1.4m0-13l1.4 1.4m10.2 10.2l1.4 1.4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-display text-sm tracking-widest text-veil-sulfur uppercase font-bold">PROJECT STRATOSPHERE</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-veil-800 text-veil-cyan border border-veil-cyan/30">ERA: 2084 // POST-VEIL</span>
+          </div>
+          <p class="font-mono text-[11px] text-gray-400">Stratospheric Aerosol Injection Telemetry & Tachyon Chrono-Relay</p>
+        </div>
+      </div>
+
+      <!-- Quick Navigation Tabs -->
+      <nav class="flex items-center space-x-1 font-mono text-xs bg-veil-850 p-1 rounded-lg border border-veil-800">
+        <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-3 py-1.5 rounded transition text-veil-sulfur bg-veil-800 font-semibold shadow">
+          1. SIMULATOR
+        </button>
+        <button onclick="switchTab('apology')" id="tab-btn-apology" class="px-3 py-1.5 rounded transition text-gray-400 hover:text-white">
+          2. THE APOLOGY
+        </button>
+        <button onclick="switchTab('shock')" id="tab-btn-shock" class="px-3 py-1.5 rounded transition text-gray-400 hover:text-white">
+          3. TERMINATION SHOCK
+        </button>
+        <button onclick="switchTab('memory')" id="tab-btn-memory" class="px-3 py-1.5 rounded transition text-gray-400 hover:text-white">
+          4. SKY COMPARATOR
+        </button>
+      </nav>
+
+      <!-- Status & Audio Hardware Controls -->
+      <div class="flex items-center space-x-2.5 font-mono text-xs">
+        <!-- Audio Synth Toggle -->
+        <button id="audio-toggle-btn" onclick="toggleAudio()" class="px-2.5 py-1.5 rounded bg-veil-850 border border-veil-700 hover:border-veil-sulfur text-gray-300 hover:text-veil-sulfur transition flex items-center space-x-1.5">
+          <svg id="audio-icon-off" class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+          </svg>
+          <svg id="audio-icon-on" class="w-3.5 h-3.5 text-veil-sulfur hidden animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+          </svg>
+          <span id="audio-label">AUDIO: MUTED</span>
+        </button>
+
+        <!-- Museum Link -->
+        <a href="museum.html" class="px-2.5 py-1.5 rounded bg-veil-850 border border-veil-800 text-gray-400 hover:text-gray-200 transition flex items-center space-x-1" title="Visit the Historical Museum">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span class="hidden md:inline">ARCHIVE</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Emergency Termination Shock Alert Banner (hidden by default) -->
+  <div id="alarm-banner" class="hidden bg-red-950/90 border-b border-red-600 px-4 py-2 text-center text-xs font-mono text-red-200 flex items-center justify-center space-x-3">
+    <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+    <span class="font-bold tracking-wider text-red-100">CRITICAL WARNING: TERMINATION SHOCK SIMULATION RUNNING — STRATOSPHERIC COLLAPSE IMMINENT</span>
+    <button onclick="abortTerminationShock()" class="px-2 py-0.5 bg-red-600 text-white rounded text-[11px] font-bold hover:bg-red-500">ABORT DRILL</button>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: STRATOSPHERIC SIMULATOR & TELEMETRY -->
+    <!-- ========================================== -->
+    <section id="tab-simulator" class="space-y-6">
+      
+      <!-- Top Overview Banner -->
+      <div class="bg-veil-900 border border-veil-800 rounded-xl p-5 relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-96 h-full bg-gradient-to-l from-veil-sulfur/5 to-transparent pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-veil-sulfur animate-pulse"></span>
+              <h2 class="font-display text-lg tracking-wider text-white uppercase font-bold">Stratospheric Solar Radiation Management Matrix</h2>
+            </div>
+            <p class="text-sm text-gray-400 mt-1 max-w-2xl">
+              Manipulate the stratospheric aerosol veil parameters below. Observe the severe trade-offs: deflecting solar radiation artificially suppresses surface temperatures, but bleaches the sky, breaks rainfall cycles, and creates a catastrophic <span class="text-veil-crimson font-mono font-semibold">Termination Shock</span> trap.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3 bg-veil-850 border border-veil-800 p-3 rounded-lg font-mono text-xs">
+            <div>
+              <div class="text-gray-400">VEIL FLEET</div>
+              <div class="text-veil-sulfur font-bold">9,420 AERO-TANKERS</div>
+            </div>
+            <div class="h-8 w-px bg-veil-800"></div>
+            <div>
+              <div class="text-gray-400">STATUS</div>
+              <div class="text-emerald-400 font-bold">CONTINUOUS DISPERSAL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Interactive Grid: Left Controls, Right Live Viewport -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Controls Column (5 cols) -->
+        <div class="lg:col-span-5 space-y-5">
+          
+          <div class="bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-5">
+            <h3 class="font-mono text-xs tracking-wider text-gray-400 uppercase flex items-center justify-between">
+              <span>Primary Atmospheric Controls</span>
+              <button onclick="resetSimulator()" class="text-[11px] text-veil-sulfur hover:underline">RESET TO 2084 LOCK-IN</button>
+            </h3>
+
+            <!-- Control 1: SO2 Injection Rate -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-gray-300 font-semibold">Aerosol Injection Rate (SO₂):</span>
+                <span id="label-so2" class="text-veil-sulfur font-bold">18.5 Mt/yr</span>
+              </div>
+              <input type="range" id="slider-so2" min="0" max="40" step="0.5" value="18.5" oninput="updateAtmosphere()" class="w-full">
+              <div class="flex justify-between text-[10px] font-mono text-gray-500">
+                <span>0 Mt (Natural Sky)</span>
+                <span>18.5 Mt (Current Pall)</span>
+                <span>40 Mt (Deep Zinc)</span>
+              </div>
+              <p class="text-[11px] text-gray-400">Reflective sulfate particles injected at 20km altitude to bounce sunlight into space.</p>
+            </div>
+
+            <!-- Control 2: Tropospheric CO2 Burden -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-gray-300 font-semibold">Underlying CO₂ Concentration:</span>
+                <span id="label-co2" class="text-veil-cyan font-bold">715 ppm</span>
+              </div>
+              <input type="range" id="slider-co2" min="400" max="950" step="5" value="715" oninput="updateAtmosphere()" class="w-full">
+              <div class="flex justify-between text-[10px] font-mono text-gray-500">
+                <span>400 ppm (Pre-crisis)</span>
+                <span>715 ppm (Masked Heat)</span>
+                <span>950 ppm (Lethal)</span>
+              </div>
+              <p class="text-[11px] text-gray-400">Trapped greenhouse gases that never stopped accumulating under the synthetic shade.</p>
+            </div>
+
+            <!-- Control 3: Fleet Maintenance / Aerosol Integrity -->
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-gray-300 font-semibold">Veil Fleet Replenishment Rate:</span>
+                <span id="label-fleet" class="text-emerald-400 font-bold">100%</span>
+              </div>
+              <input type="range" id="slider-fleet" min="0" max="100" step="1" value="100" oninput="updateAtmosphere()" class="w-full">
+              <div class="flex justify-between text-[10px] font-mono text-gray-500">
+                <span class="text-red-400">0% (Scram / Collapse)</span>
+                <span>50%</span>
+                <span>100% (Full Cover)</span>
+              </div>
+              <p class="text-[11px] text-gray-400">Particles precipitate out every 18 months. Without constant flights, the veil dissolves.</p>
+            </div>
+
+          </div>
+
+          <!-- Real-Time Impact Metric Cards -->
+          <div class="grid grid-cols-2 gap-3 font-mono">
+            <!-- Metric 1: Temp Offset -->
+            <div class="bg-veil-900 border border-veil-800 rounded-lg p-3">
+              <div class="text-[10px] text-gray-400 uppercase">Surface Temp Offset</div>
+              <div id="metric-temp" class="text-xl font-bold text-veil-sulfur mt-1">+1.4°C</div>
+              <div id="metric-temp-sub" class="text-[10px] text-gray-500 mt-0.5">Masking +4.6°C true heat</div>
+            </div>
+
+            <!-- Metric 2: Rainfall Index -->
+            <div class="bg-veil-900 border border-veil-800 rounded-lg p-3">
+              <div class="text-[10px] text-gray-400 uppercase">Global Rainfall Deficit</div>
+              <div id="metric-rain" class="text-xl font-bold text-red-400 mt-1">-34.8%</div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Monsoon engine stalled</div>
+            </div>
+
+            <!-- Metric 3: Direct Sunlight Ratio -->
+            <div class="bg-veil-900 border border-veil-800 rounded-lg p-3">
+              <div class="text-[10px] text-gray-400 uppercase">Direct Sun vs Diffuse</div>
+              <div id="metric-sun" class="text-xl font-bold text-gray-300 mt-1">12% / 88%</div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Scattered into white glare</div>
+            </div>
+
+            <!-- Metric 4: Photosynthetic Yield -->
+            <div class="bg-veil-900 border border-veil-800 rounded-lg p-3">
+              <div class="text-[10px] text-gray-400 uppercase">Crop Yield Collapse</div>
+              <div id="metric-crops" class="text-xl font-bold text-red-400 mt-1">-48.2%</div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Chronic light starvation</div>
+            </div>
+          </div>
+
+          <!-- Termination Risk Gauge Card -->
+          <div id="shock-gauge-card" class="bg-veil-900 border border-veil-800 rounded-xl p-4 font-mono">
+            <div class="flex items-center justify-between text-xs mb-2">
+              <span class="text-gray-300 font-semibold flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span>TERMINATION SHOCK POTENTIAL</span>
+              </span>
+              <span id="shock-rating" class="text-red-400 font-bold">EXTREME (+5.2°C REBOUND)</span>
+            </div>
+            <div class="w-full bg-veil-800 h-2.5 rounded-full overflow-hidden border border-veil-700">
+              <div id="shock-gauge-bar" class="h-full bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 transition-all duration-300" style="width: 86%;"></div>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-2">
+              If the drone fleet stops, the veil clears in 24 months. The accumulated 715 ppm CO₂ will instantly flash-heat the planet by 5.2°C, causing total biosphere extinction.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Visualizer Viewports (7 cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          
+          <!-- Viewport 1: Live Exterior Sky Window -->
+          <div class="bg-veil-900 border border-veil-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-veil-sulfur" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span class="font-mono text-xs text-gray-200 font-bold uppercase tracking-wider">Surface Observation Port // Current Sky Quality</span>
+              </div>
+              <span id="sky-description" class="text-[11px] font-mono px-2 py-0.5 rounded bg-veil-850 text-gray-300 border border-veil-700">MILKY BRUISED-ZINC HAZE</span>
+            </div>
+
+            <!-- Dynamic Sky Canvas / Frame -->
+            <div id="sky-viewport" class="w-full h-48 rounded-lg relative overflow-hidden border border-veil-700 flex flex-col items-center justify-center transition-all duration-700 shadow-inner">
+              
+              <!-- Simulated Sun Orb inside sky -->
+              <div id="sky-sun" class="w-20 h-20 rounded-full transition-all duration-700 blur-[12px] opacity-75"></div>
+              
+              <!-- Subtle Cloud & Haze Drift Overlay -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+              
+              <!-- Horizon Silhouettes -->
+              <div class="absolute bottom-0 inset-x-0 h-10 bg-veil-950/80 backdrop-blur-xs border-t border-veil-800 flex items-center justify-between px-4 text-[10px] font-mono text-gray-400">
+                <span id="lux-reading">AMBIENT ILLUMINANCE: 42,000 LUX (DIFFUSE)</span>
+                <span id="kelvin-reading">COLOR TEMP: 4,800K (ZINC-BLEACHED)</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-gray-500">
+              <span>Pre-Veil Rayleigh Blue (450nm)</span>
+              <span>Sulfur Mie Scatter (550nm)</span>
+              <span>Zinc Smog Extinction</span>
+            </div>
+          </div>
+
+          <!-- Viewport 2: Planetary Cross-Section Canvas -->
+          <div class="bg-veil-900 border border-veil-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-veil-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+                <span class="font-mono text-xs text-gray-200 font-bold uppercase tracking-wider">Atmospheric Radiative Flux Model (Live Particles)</span>
+              </div>
+              <div class="text-[11px] font-mono text-gray-400 flex items-center space-x-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-yellow-400"></span><span>Sunlight</span>
+                <span class="inline-block w-2 h-2 rounded-full bg-red-400"></span><span>Trapped IR</span>
+                <span class="inline-block w-2 h-2 rounded-full bg-gray-400"></span><span>Veil</span>
+              </div>
+            </div>
+
+            <!-- Canvas for particle simulation -->
+            <div class="w-full h-56 bg-veil-950 rounded-lg relative overflow-hidden border border-veil-800">
+              <canvas id="atmosphereCanvas" class="w-full h-full block"></canvas>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-[10px] font-mono text-gray-400 text-center">
+              <div class="bg-veil-850 p-1.5 rounded border border-veil-800">
+                <span class="text-veil-sulfur block font-bold">TOP LAYER (20KM)</span>
+                Aerosol Veil Deflects Solar Flux
+              </div>
+              <div class="bg-veil-850 p-1.5 rounded border border-veil-800">
+                <span class="text-veil-cyan block font-bold">TROPOPAUSE (12KM)</span>
+                Jet Streams Slowed & Flattened
+              </div>
+              <div class="bg-veil-850 p-1.5 rounded border border-veil-800">
+                <span class="text-red-400 block font-bold">SURFACE (0KM)</span>
+                Greenhouse Blanket Trapped
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: THE CHRONO-TRANSMISSION & APOLOGY   -->
+    <!-- ========================================== -->
+    <section id="tab-apology" class="hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Decrypted Apology Console (7 cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          <div class="bg-veil-900 border border-veil-800 rounded-xl p-6 relative">
+            
+            <!-- Terminal Header -->
+            <div class="flex items-center justify-between border-b border-veil-800 pb-4 mb-5 font-mono text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-veil-sulfur animate-ping"></span>
+                <span class="text-gray-300 font-bold tracking-wider">CHRONO-RELAY PACKET #774-ALPHA</span>
+              </div>
+              <div class="text-gray-500 text-[11px]">
+                ORIGIN: 2084-10-21 // TARGET: 2024-ERA
+              </div>
+            </div>
+
+            <!-- Decryption & Audio Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-6 bg-veil-850 p-3 rounded-lg border border-veil-800">
+              <button onclick="readApologySpeech()" id="btn-speech" class="px-3.5 py-1.5 bg-veil-sulfur text-veil-950 font-mono text-xs font-bold rounded hover:bg-yellow-400 transition flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span id="speech-btn-label">PLAY TRANSMISSION AUDIO</span>
+              </button>
+
+              <button onclick="replayTypewriter()" class="px-3 py-1.5 bg-veil-800 text-gray-300 font-mono text-xs rounded hover:text-white hover:bg-veil-700 transition">
+                RE-DECRYPT TEXT
+              </button>
+
+              <!-- Audio visualizer bars -->
+              <div class="flex items-end space-x-1 h-5 w-24 px-1" id="audio-wave-bars">
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-2"></span>
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-4"></span>
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-1"></span>
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-5"></span>
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-3"></span>
+                <span class="w-1 bg-veil-sulfur/40 rounded-t h-2"></span>
+              </div>
+            </div>
+
+            <!-- Letter Display Area -->
+            <div class="font-serif text-lg leading-relaxed text-gray-200 bg-veil-950/80 p-6 rounded-lg border border-veil-800/80 shadow-inner relative">
+              <div class="absolute top-3 right-3 text-[10px] font-mono text-gray-500 uppercase tracking-widest pointer-events-none">
+                RESTRICTED DISPATCH
+              </div>
+
+              <div id="apology-text-container" class="space-y-4">
+                <!-- Dynamically rendered or preloaded text -->
+                <p class="italic text-gray-300 font-medium">I am so sorry.</p>
+                <p>
+                  When the fever of the world wouldn't break, we didn't have the discipline to put down our torches—we simply decided to veil the sky. We seeded the upper atmosphere with dust and sulfur, convinced our equations were clever enough to shade the earth without starving it.
+                </p>
+                <p>
+                  The heat broke, yes. But it took the rain with it.
+                </p>
+                <p>
+                  The soil withered beneath a perpetual, bruised-zinc haze, and the seasons simply forgot how to change. We traded rising tides for starving continents, all to avoid changing the way we lived.
+                </p>
+                <p>
+                  You left us a world with an open horizon, and we smothered it out of sheer cowardice. Now my daughter asks if the sunlight in your photographs really felt warm on the skin, and I don't have the heart to tell her what we stole.
+                </p>
+              </div>
+
+              <!-- Signature -->
+              <div class="mt-6 pt-4 border-t border-veil-800 flex justify-between items-end font-mono text-xs text-gray-400">
+                <div>
+                  <div>STATION: Stratospheric Monitoring Post Gamma</div>
+                  <div>ALTITUDE: 19,800m // CLOUD SECTOR 9</div>
+                </div>
+                <div class="text-veil-sulfur font-bold text-right">
+                  TRANSMISSION COMPLETE
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Annotation Explanations -->
+            <div class="mt-4 p-3 bg-veil-850 rounded-lg border border-veil-800 text-xs font-mono text-gray-400 flex items-center justify-between">
+              <span>💡 <strong class="text-gray-300">Curator Note:</strong> The sender never names the event, yet reveals the catastrophic chain reaction: Solar Radiation Management (SRM) gone rogue.</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Chronological Dossier of the Fall (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-mono text-xs tracking-wider text-veil-sulfur uppercase font-bold flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>CHRONOLOGY OF THE VEILED SKY</span>
+            </h3>
+
+            <div class="relative border-l-2 border-veil-800 pl-4 space-y-5 text-xs font-mono">
+              
+              <!-- Event 1 -->
+              <div class="relative group">
+                <div class="absolute -left-[21px] top-0 w-2.5 h-2.5 rounded-full bg-veil-cyan border-2 border-veil-950"></div>
+                <div class="text-veil-cyan font-bold">2036 // THE DELHI PROTOCOL</div>
+                <p class="text-gray-400 mt-1 leading-normal font-sans text-xs">
+                  Global heatwaves top 52°C across equatorial zones. Unable to reach consensus on cutting fossil consumption, a coalition of nations launches unilateral aerosol deployment.
+                </p>
+              </div>
+
+              <!-- Event 2 -->
+              <div class="relative group">
+                <div class="absolute -left-[21px] top-0 w-2.5 h-2.5 rounded-full bg-veil-sulfur border-2 border-veil-950"></div>
+                <div class="text-veil-sulfur font-bold">2041 // "OPERATION SUNSCREEN"</div>
+                <p class="text-gray-400 mt-1 leading-normal font-sans text-xs">
+                  5,000 retrofitted high-altitude tankers disperse 12 megatons of aerosol annually into the stratosphere. Peak temperatures drop by 1.2°C within eighteen months. Celebrations erupt globally.
+                </p>
+              </div>
+
+              <!-- Event 3 -->
+              <div class="relative group">
+                <div class="absolute -left-[21px] top-0 w-2.5 h-2.5 rounded-full bg-red-400 border-2 border-veil-950"></div>
+                <div class="text-red-400 font-bold">2047 // THE FIRST MONSOONS FAIL</div>
+                <p class="text-gray-400 mt-1 leading-normal font-sans text-xs">
+                  Without intense solar evaporation, oceanic conveyor belts stall. South Asian and sub-Saharan monsoons drop by 40%. The breadbaskets turn to dust, but nobody dares stop the flights.
+                </p>
+              </div>
+
+              <!-- Event 4 -->
+              <div class="relative group">
+                <div class="absolute -left-[21px] top-0 w-2.5 h-2.5 rounded-full bg-purple-400 border-2 border-veil-950"></div>
+                <div class="text-purple-400 font-bold">2058 // THE GOLDEN HOUR EXTINCTION</div>
+                <p class="text-gray-400 mt-1 leading-normal font-sans text-xs">
+                  Atmospheric Rayleigh scattering is permanently overpowered by Mie scattering. Direct golden sunlight ceases; daylight becomes an eerie zinc glare. A generation is born having never seen a blue sky.
+                </p>
+              </div>
+
+              <!-- Event 5 -->
+              <div class="relative group">
+                <div class="absolute -left-[21px] top-0 w-2.5 h-2.5 rounded-full bg-red-600 border-2 border-veil-950 animate-pulse"></div>
+                <div class="text-red-500 font-bold">2084 // THE ETERNAL CAGE</div>
+                <p class="text-gray-400 mt-1 leading-normal font-sans text-xs">
+                  CO₂ reaches 715 ppm underneath the shield. Halting the flights would mean instant +5.8°C thermal shock in 24 months. Humanity is trapped feeding the machines forever.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: TERMINATION SHOCK SIMULATOR         -->
+    <!-- ========================================== -->
+    <section id="tab-shock" class="hidden space-y-6">
+      
+      <!-- Warning Header -->
+      <div class="bg-red-950/40 border border-red-700/60 rounded-xl p-5 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
+              <h2 class="font-display text-lg tracking-wider text-red-300 uppercase font-bold">Termination Shock Dynamic Crisis Drill</h2>
+            </div>
+            <p class="text-sm text-gray-300 mt-1 max-w-3xl">
+              What happens if war, drone fuel depletion, or political collapse abruptly halts aerosol injection? Simulate the immediate 36-month aftermath as the veil washes out of the stratosphere.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button id="btn-run-shock" onclick="toggleTerminationShockDrill()" class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-mono text-xs font-bold rounded-lg transition shadow-lg flex items-center space-x-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span id="btn-shock-label">INITIATE INJECTION FLEET SHUTDOWN</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Rebound Graph & Timeline -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Graph (8 cols) -->
+        <div class="lg:col-span-8 bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="font-mono text-xs text-gray-300 font-bold uppercase tracking-wider">
+              36-Month Temperature Rebound Velocity (°C Anomaly)
+            </div>
+            <span id="shock-timeline-badge" class="font-mono text-xs px-2 py-0.5 rounded bg-veil-850 text-veil-sulfur border border-veil-700">STATUS: DRILL IDLE (FLEET ACTIVE)</span>
+          </div>
+
+          <!-- Chart.js canvas -->
+          <div class="w-full h-72 relative">
+            <canvas id="shockChart"></canvas>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] font-mono text-gray-400 border-t border-veil-800 pt-3">
+            <span>Month 0: Injection Ceases</span>
+            <span>Month 12: Aerosols Raining Out</span>
+            <span>Month 24: Unmitigated Solar Influx</span>
+            <span class="text-red-400 font-bold">Month 36: +5.8°C Spike</span>
+          </div>
+        </div>
+
+        <!-- Right Side: Month by Month Catastrophe Logs (4 cols) -->
+        <div class="lg:col-span-4 bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-4 font-mono text-xs">
+          <h3 class="font-mono text-xs tracking-wider text-gray-400 uppercase font-bold">
+            Simulated Emergency Telemetry
+          </h3>
+
+          <div class="space-y-3" id="shock-event-logs">
+            <div class="p-3 rounded bg-veil-850 border border-veil-800">
+              <div class="text-gray-400 text-[10px]">CURRENT INTERVAL:</div>
+              <div id="shock-current-month" class="text-veil-sulfur font-bold text-sm mt-0.5">MONTH 0 (STABLE VEIL)</div>
+              <p id="shock-current-desc" class="text-gray-300 font-sans text-xs mt-1">
+                9,420 stratospheric drones currently maintaining 18.5 Mt/yr sulfate cloud. Surface temperature held at +1.4°C.
+              </p>
+            </div>
+
+            <div class="p-3 rounded bg-veil-850 border border-veil-800 space-y-1 text-[11px]">
+              <div class="text-gray-400">ATMOSPHERIC OPTICAL DEPTH (AOD):</div>
+              <div id="shock-aod-val" class="font-bold text-gray-200">0.24 (High Reflection)</div>
+              <div class="text-gray-400 mt-2">PROJECTED BIOSPHERE MORTALITY:</div>
+              <div id="shock-mortality-val" class="font-bold text-emerald-400">Baseline (Controlled)</div>
+            </div>
+
+            <div class="p-3 rounded bg-red-950/20 border border-red-900/40 text-[11px] text-gray-300">
+              <span class="text-red-400 font-bold block mb-1">WHY CANNOT THEY STOP?</span>
+              Cutting emissions cools slowly over centuries. But the veil only masked the heat. Halting it causes 100 years of global warming to hit in less than 36 months—an existential shock no organism can adapt to.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: MEMORY OF WARMTH // SKY COMPARATOR  -->
+    <!-- ========================================== -->
+    <section id="tab-memory" class="hidden space-y-6">
+      
+      <div class="bg-veil-900 border border-veil-800 rounded-xl p-5">
+        <div class="max-w-3xl">
+          <h2 class="font-display text-lg tracking-wider text-white uppercase font-bold">The Memory of Warmth: Sky & Sunlight Comparator</h2>
+          <p class="text-sm text-gray-400 mt-1">
+            Drag the divider slider below to witness what was lost. On the left: the natural, unfiltered golden afternoon sunlight of 2024. On the right: the bruised-zinc, milky diffusion of 2084 after the solar shield took hold.
+          </p>
+        </div>
+      </div>
+
+      <!-- Before / After Draggable Split View -->
+      <div class="bg-veil-900 border border-veil-800 rounded-xl p-6 flex flex-col items-center">
+        
+        <div class="relative w-full max-w-4xl h-80 rounded-xl overflow-hidden shadow-2xl border border-veil-700 compare-wrapper" id="compare-container">
+          
+          <!-- Background: 2084 POST-VEIL SKY (Zinc, bleached, hazy) -->
+          <div class="absolute inset-0 bg-gradient-to-b from-[#8f9aa8] via-[#a8b1be] to-[#5b6470] flex flex-col justify-between p-6">
+            <div class="flex justify-end">
+              <span class="font-mono text-xs px-2.5 py-1 rounded bg-black/60 text-gray-200 backdrop-blur border border-white/20">
+                2084: POST-VEIL CEILING (ZINC DIFFUSION)
+              </span>
+            </div>
+            
+            <!-- Washed out white sun blur -->
+            <div class="w-32 h-32 rounded-full bg-white/70 blur-2xl self-center"></div>
+
+            <div class="font-mono text-xs text-gray-900/80 bg-white/60 backdrop-blur px-3 py-1.5 rounded w-max">
+              Direct Light: 11% | Spectral Temp: 4,900K | Sky Color: Milky Bruised Gray
+            </div>
+          </div>
+
+          <!-- Overlay: 2024 PRE-VEIL SKY (Azure blue, warm gold sun) -->
+          <div class="compare-overlay" id="compare-overlay">
+            <div class="absolute inset-0 w-[896px] bg-gradient-to-b from-[#1e40af] via-[#38bdf8] to-[#fef08a] flex flex-col justify-between p-6">
+              <div class="flex justify-start">
+                <span class="font-mono text-xs px-2.5 py-1 rounded bg-black/60 text-amber-300 backdrop-blur border border-amber-400/30">
+                  2024: HISTORICAL SKY (GOLDEN RAYLEIGH BLUE)
+                </span>
+              </div>
+
+              <!-- Sharp, radiant golden sun -->
+              <div class="w-24 h-24 rounded-full bg-yellow-200 shadow-[0_0_60px_#f59e0b] self-center"></div>
+
+              <div class="font-mono text-xs text-gray-900/90 bg-amber-100/80 backdrop-blur px-3 py-1.5 rounded w-max">
+                Direct Light: 89% | Spectral Temp: 5,780K | Sky Color: Pure Azure Blue
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider Handle -->
+          <div id="compare-handle" class="absolute top-0 bottom-0 w-1 bg-veil-sulfur cursor-ew-resize z-20 flex items-center justify-center pointer-events-none" style="left: 50%;">
+            <div class="w-7 h-7 rounded-full bg-veil-sulfur text-veil-950 font-bold text-xs flex items-center justify-center shadow-lg border-2 border-veil-950">
+              ↔
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Slider Range control below -->
+        <div class="w-full max-w-md mt-6 space-y-2">
+          <input type="range" id="compare-slider" min="0" max="100" value="50" oninput="handleCompareSlider(this.value)" class="w-full">
+          <div class="flex justify-between font-mono text-xs text-gray-400">
+            <span>← Slide to reveal 2024 Sunlight</span>
+            <span>Slide to reveal 2084 Zinc Sky →</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Spectrometric Solar Breakdown Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-3 font-mono text-xs">
+          <h4 class="text-veil-cyan font-bold uppercase tracking-wider flex items-center space-x-1.5">
+            <span>Rayleigh Scattering (Pre-Veil)</span>
+          </h4>
+          <p class="text-gray-300 font-sans text-xs leading-relaxed">
+            In clear air, microscopic nitrogen and oxygen molecules scatter shorter blue wavelengths (\(\sim 450\text{ nm}\)) ten times more than red light. This creates the breathtaking, luminous cerulean sky that human eyes evolved beneath for three million years.
+          </p>
+        </div>
+
+        <div class="bg-veil-900 border border-veil-800 rounded-xl p-5 space-y-3 font-mono text-xs">
+          <h4 class="text-veil-sulfur font-bold uppercase tracking-wider flex items-center space-x-1.5">
+            <span>Mie Aerosol Scattering (Post-Veil)</span>
+          </h4>
+          <p class="text-gray-300 font-sans text-xs leading-relaxed">
+            Sub-micron sulfate aerosols (\(\text{H}_2\text{SO}_4\)) scatter all wavelengths uniformly. The crisp blue dissolves into an opaque, milky-zinc glare. Shadows become fuzzy smudges, and the emotional sensation of direct radiant heat on skin is completely extinguished.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-veil-800 bg-veil-900/60 py-4 font-mono text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div>
+        PROJECT STRATOSPHERE // CHRONO-TELEMETRY DISPATCH v4.8
+      </div>
+      <div class="text-gray-400">
+        "You gave us an unshielded sky, and we choked it because we were too proud to stop burning."
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT LOGIC & AUDIO SYNTHESIZER       -->
+  <!-- ========================================== -->
+  <script>
+    /* ========================================================
+       1. GLOBAL STATE & WEB AUDIO SYNTHESIZER
+       ======================================================== */
+    const state = {
+      so2: 18.5,           // Mt / yr
+      co2: 715,            // ppm
+      fleet: 100,          // %
+      audioEnabled: false,
+      isDrillRunning: false,
+      drillMonth: 0,
+      drillInterval: null
+    };
+
+    let audioCtx = null;
+    let masterGain = null;
+    let droneOsc1 = null;
+    let droneOsc2 = null;
+    let droneFilter = null;
+    let staticNode = null;
+    let shockChart = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+
+        // Ambient Stratospheric Drone (detuned low oscillators)
+        droneFilter = audioCtx.createBiquadFilter();
+        droneFilter.type = 'lowpass';
+        droneFilter.frequency.setValueAtTime(120, audioCtx.currentTime);
+        droneFilter.connect(masterGain);
+
+        droneOsc1 = audioCtx.createOscillator();
+        droneOsc1.type = 'sawtooth';
+        droneOsc1.frequency.setValueAtTime(55, audioCtx.currentTime); // A1
+        droneOsc1.connect(droneFilter);
+        droneOsc1.start();
+
+        droneOsc2 = audioCtx.createOscillator();
+        droneOsc2.type = 'sine';
+        droneOsc2.frequency.setValueAtTime(57.5, audioCtx.currentTime); // detuned
+        droneOsc2.connect(droneFilter);
+        droneOsc2.start();
+
+        // White noise static for atmospheric scatter
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(800, audioCtx.currentTime);
+        noiseFilter.Q.setValueAtTime(4.0, audioCtx.currentTime);
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+
+        whiteNoise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(masterGain);
+        whiteNoise.start();
+
+      } catch (e) {
+        console.warn("Audio initialization postponed until user gesture:", e);
+      }
+    }
+
+    function playBeep(freq = 880, duration = 0.08, type = 'sine') {
+      if (!audioCtx || !state.audioEnabled) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {}
+    }
+
+    function toggleAudio() {
+      if (!audioCtx) initAudio();
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      state.audioEnabled = !state.audioEnabled;
+      const btnOff = document.getElementById('audio-icon-off');
+      const btnOn = document.getElementById('audio-icon-on');
+      const label = document.getElementById('audio-label');
+
+      if (state.audioEnabled) {
+        masterGain.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.1);
+        btnOff.classList.add('hidden');
+        btnOn.classList.remove('hidden');
+        label.textContent = "AUDIO: ONLINE";
+        label.classList.add('text-veil-sulfur');
+        playBeep(1200, 0.15);
+      } else {
+        masterGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.05);
+        btnOff.classList.remove('hidden');
+        btnOn.classList.add('hidden');
+        label.textContent = "AUDIO: MUTED";
+        label.classList.remove('text-veil-sulfur');
+      }
+    }
+
+    /* ========================================================
+       2. TAB NAVIGATION
+       ======================================================== */
+    function switchTab(tabId) {
+      playBeep(940, 0.05);
+      const tabs = ['simulator', 'apology', 'shock', 'memory'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabId) {
+          el.classList.remove('hidden');
+          btn.className = "px-3 py-1.5 rounded transition text-veil-sulfur bg-veil-800 font-semibold shadow";
+        } else {
+          el.classList.add('hidden');
+          btn.className = "px-3 py-1.5 rounded transition text-gray-400 hover:text-white";
+        }
+      });
+
+      if (tabId === 'shock' && !shockChart) {
+        initShockChart();
+      }
+    }
+
+    /* ========================================================
+       3. ATMOSPHERIC SIMULATOR CALCULATIONS & UI UPDATES
+       ======================================================== */
+    function updateAtmosphere() {
+      state.so2 = parseFloat(document.getElementById('slider-so2').value);
+      state.co2 = parseFloat(document.getElementById('slider-co2').value);
+      state.fleet = parseFloat(document.getElementById('slider-fleet').value);
+
+      document.getElementById('label-so2').textContent = `${state.so2.toFixed(1)} Mt/yr`;
+      document.getElementById('label-co2').textContent = `${Math.round(state.co2)} ppm`;
+      document.getElementById('label-fleet').textContent = `${Math.round(state.fleet)}%`;
+
+      // Effective aerosol reflecting power: SO2 * (fleet/100)
+      const effectiveAerosol = state.so2 * (state.fleet / 100);
+
+      // Calculations:
+      // CO2 baseline warming above pre-industrial: ~ 3.0 * ln(CO2 / 280) / ln(2)
+      const unmaskedWarming = 3.0 * (Math.log(state.co2 / 280) / Math.LN2);
+      
+      // Aerosol cooling offset: approx -0.22°C per Mt/yr
+      const aerosolCooling = effectiveAerosol * 0.22;
+      
+      const netTemp = Math.max(-0.5, unmaskedWarming - aerosolCooling);
+
+      // Rainfall Deficit: each Mt of aerosol disrupts hydrological cycle by ~1.9%
+      const rainDeficit = Math.min(65, effectiveAerosol * 1.88);
+
+      // Direct Sun percentage: 90% in pristine air, down to ~5% with 40 Mt
+      const directPct = Math.max(5, Math.round(88 - (effectiveAerosol * 2.1)));
+      const diffusePct = 100 - directPct;
+
+      // Crop Yield Collapse: due to combination of rainfall deficit and diffuse light
+      const cropLoss = Math.min(80, (rainDeficit * 0.9) + ((diffusePct - 20) * 0.25));
+
+      // Termination Shock Potential (the rebound if aerosol ceased)
+      const shockRebound = aerosolCooling;
+
+      // Update UI elements
+      document.getElementById('metric-temp').textContent = `+${netTemp.toFixed(1)}°C`;
+      document.getElementById('metric-temp-sub').textContent = `Masking +${unmaskedWarming.toFixed(1)}°C underlying heat`;
+      
+      const rainEl = document.getElementById('metric-rain');
+      rainEl.textContent = `-${rainDeficit.toFixed(1)}%`;
+      
+      document.getElementById('metric-sun').textContent = `${directPct}% / ${diffusePct}%`;
+      document.getElementById('metric-crops').textContent = `-${cropLoss.toFixed(1)}%`;
+
+      // Shock Bar
+      const shockPct = Math.min(100, Math.round((shockRebound / 6.0) * 100));
+      document.getElementById('shock-gauge-bar').style.width = `${shockPct}%`;
+      document.getElementById('shock-rating').textContent = `REBOUND RISK: +${shockRebound.toFixed(1)}°C FLASH SPIKE`;
+
+      // Update Dynamic Sky Viewport
+      updateSkyView(effectiveAerosol, netTemp);
+
+      // Subtle sound click
+      playBeep(400 + effectiveAerosol * 15, 0.03, 'triangle');
+    }
+
+    function updateSkyView(effectiveAerosol, netTemp) {
+      const viewport = document.getElementById('sky-viewport');
+      const sun = document.getElementById('sky-sun');
+      const skyDesc = document.getElementById('sky-description');
+      const luxEl = document.getElementById('lux-reading');
+      const kelvinEl = document.getElementById('kelvin-reading');
+
+      if (effectiveAerosol < 3) {
+        // Clear Blue Sky
+        viewport.style.background = 'linear-gradient(to bottom, #1d4ed8, #60a5fa)';
+        sun.style.backgroundColor = '#fef08a';
+        sun.style.boxShadow = '0 0 50px #eab308';
+        sun.style.filter = 'blur(4px)';
+        sun.style.opacity = '1';
+        skyDesc.textContent = "NATURAL AZURE (PRE-VEIL BLUE)";
+        skyDesc.className = "text-[11px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-700";
+        luxEl.textContent = "AMBIENT ILLUMINANCE: 105,000 LUX (DIRECT)";
+        kelvinEl.textContent = "COLOR TEMP: 5,600K (NATURAL SOLAR)";
+      } else if (effectiveAerosol < 12) {
+        // Pale Milky Blue
+        viewport.style.background = 'linear-gradient(to bottom, #4b6a9b, #93a9c7)';
+        sun.style.backgroundColor = '#fffbeb';
+        sun.style.boxShadow = '0 0 35px #d4af37';
+        sun.style.filter = 'blur(10px)';
+        sun.style.opacity = '0.9';
+        skyDesc.textContent = "BLEACHED CHALKY SKY (INITIAL INJECTION)";
+        skyDesc.className = "text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 text-gray-300 border border-slate-700";
+        luxEl.textContent = "AMBIENT ILLUMINANCE: 72,000 LUX (SEMI-DIFFUSE)";
+        kelvinEl.textContent = "COLOR TEMP: 5,100K";
+      } else if (effectiveAerosol < 26) {
+        // Bruised Zinc Gray
+        viewport.style.background = 'linear-gradient(to bottom, #565d6b, #8a94a6)';
+        sun.style.backgroundColor = '#e2e8f0';
+        sun.style.boxShadow = '0 0 25px rgba(255,255,255,0.4)';
+        sun.style.filter = 'blur(18px)';
+        sun.style.opacity = '0.75';
+        skyDesc.textContent = "MILKY BRUISED-ZINC HAZE (2084 LOCK-IN)";
+        skyDesc.className = "text-[11px] font-mono px-2 py-0.5 rounded bg-veil-850 text-veil-sulfur border border-veil-sulfur/40";
+        luxEl.textContent = "AMBIENT ILLUMINANCE: 41,000 LUX (DIFFUSE)";
+        kelvinEl.textContent = "COLOR TEMP: 4,800K (BLEACHED)";
+      } else {
+        // Dense Sulfur/Lead Smog
+        viewport.style.background = 'linear-gradient(to bottom, #393e46, #6b6352)';
+        sun.style.backgroundColor = '#d4a237';
+        sun.style.boxShadow = '0 0 20px #854d0e';
+        sun.style.filter = 'blur(26px)';
+        sun.style.opacity = '0.5';
+        skyDesc.textContent = "LEADEN SULFUR TWILIGHT (HEAVY VEIL)";
+        skyDesc.className = "text-[11px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700";
+        luxEl.textContent = "AMBIENT ILLUMINANCE: 22,000 LUX (EXTINCTION)";
+        kelvinEl.textContent = "COLOR TEMP: 4,200K (DIM SULFUROUS)";
+      }
+    }
+
+    function resetSimulator() {
+      document.getElementById('slider-so2').value = 18.5;
+      document.getElementById('slider-co2').value = 715;
+      document.getElementById('slider-fleet').value = 100;
+      updateAtmosphere();
+      playBeep(600, 0.1);
+    }
+
+    /* ========================================================
+       4. ATMOSPHERIC PARTICLE CANVAS ANIMATION
+       ======================================================== */
+    const canvas = document.getElementById('atmosphereCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let solarRays = [];
+
+    function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Initialize particles
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * 800,
+        y: 20 + Math.random() * 50, // Stratosphere layer
+        vx: 0.5 + Math.random() * 1.2,
+        size: 1.5 + Math.random() * 2,
+        alpha: 0.4 + Math.random() * 0.5
+      });
+    }
+
+    for (let i = 0; i < 25; i++) {
+      solarRays.push({
+        x: Math.random() * 800,
+        y: 0,
+        vy: 2 + Math.random() * 3,
+        deflected: false
+      });
+    }
+
+    function renderAtmosphereCanvas() {
+      if (!canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const effectiveAerosol = state.so2 * (state.fleet / 100);
+
+      // Layers:
+      // Stratosphere (top 30%)
+      const stratY = canvas.height * 0.32;
+      ctx.fillStyle = `rgba(118, 130, 148, ${Math.min(0.6, 0.1 + (effectiveAerosol / 60))})`;
+      ctx.fillRect(0, 0, canvas.width, stratY);
+
+      // Tropopause Divider
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, stratY);
+      ctx.lineTo(canvas.width, stratY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Troposphere & Surface (bottom 68%)
+      const heatFactor = Math.min(0.5, (state.co2 - 400) / 1000);
+      ctx.fillStyle = `rgba(239, 68, 68, ${heatFactor * 0.4})`;
+      ctx.fillRect(0, stratY, canvas.width, canvas.height - stratY);
+
+      // Draw Earth Surface Line
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, canvas.height - 18, canvas.width, 18);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, canvas.height - 20, canvas.width, 2);
+
+      // Render Solar Influx Rays
+      ctx.fillStyle = '#fde047';
+      solarRays.forEach(ray => {
+        ray.y += ray.vy;
+        
+        // Deflection chance in stratosphere
+        if (!ray.deflected && ray.y >= 15 && ray.y <= stratY) {
+          const deflectChance = effectiveAerosol / 45;
+          if (Math.random() < deflectChance) {
+            ray.deflected = true;
+          }
+        }
+
+        if (ray.deflected) {
+          // Ray bounces upwards/back into space
+          ray.y -= ray.vy * 1.5;
+          ray.x += 1.5;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        } else {
+          ctx.fillStyle = '#fde047';
+        }
+
+        ctx.beginPath();
+        ctx.arc(ray.x, ray.y, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Reset
+        if (ray.y > canvas.height || ray.y < -10) {
+          ray.x = Math.random() * canvas.width;
+          ray.y = 0;
+          ray.deflected = false;
+        }
+      });
+
+      // Render Aerosol Particles in Stratosphere
+      particles.forEach(p => {
+        p.x += p.vx;
+        if (p.x > canvas.width) p.x = 0;
+        
+        const opacity = Math.min(1, p.alpha * (effectiveAerosol / 20));
+        ctx.fillStyle = `rgba(212, 162, 55, ${opacity})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Labels inside canvas
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '10px monospace';
+      ctx.fillText('STRATOSPHERE (SULFATE REFLECTIVE VEIL)', 12, 20);
+      ctx.fillText('TROPOSPHERE (TRAPPED GREENHOUSE HEAT)', 12, stratY + 20);
+
+      requestAnimationFrame(renderAtmosphereCanvas);
+    }
+    renderAtmosphereCanvas();
+
+    /* ========================================================
+       5. CHRONO-TRANSMISSION DECRYPTOR & WEB SPEECH AUDIO
+       ======================================================== */
+    const apologyParagraphs = [
+      "I am so sorry.",
+      "When the fever of the world wouldn't break, we didn't have the discipline to put down our torches—we simply decided to veil the sky. We seeded the upper atmosphere with dust and sulfur, convinced our equations were clever enough to shade the earth without starving it.",
+      "The heat broke, yes. But it took the rain with it.",
+      "The soil withered beneath a perpetual, bruised-zinc haze, and the seasons simply forgot how to change. We traded rising tides for starving continents, all to avoid changing the way we lived.",
+      "You left us a world with an open horizon, and we smothered it out of sheer cowardice. Now my daughter asks if the sunlight in your photographs really felt warm on the skin, and I don't have the heart to tell her what we stole."
+    ];
+
+    function replayTypewriter() {
+      playBeep(1100, 0.08);
+      const container = document.getElementById('apology-text-container');
+      container.innerHTML = '';
+      let pIdx = 0;
+
+      function typeNextParagraph() {
+        if (pIdx >= apologyParagraphs.length) return;
+        const p = document.createElement('p');
+        if (pIdx === 0) p.className = "italic text-gray-300 font-medium";
+        container.appendChild(p);
+
+        const text = apologyParagraphs[pIdx];
+        let charIdx = 0;
+
+        const interval = setInterval(() => {
+          p.textContent += text[charIdx];
+          charIdx++;
+          if (charIdx % 4 === 0) playBeep(900 + (charIdx * 2), 0.015, 'sine');
+
+          if (charIdx >= text.length) {
+            clearInterval(interval);
+            pIdx++;
+            setTimeout(typeNextParagraph, 300);
+          }
+        }, 18);
+      }
+
+      typeNextParagraph();
+    }
+
+    let isSpeaking = false;
+    function readApologySpeech() {
+      const btn = document.getElementById('btn-speech');
+      const label = document.getElementById('speech-btn-label');
+
+      if (!('speechSynthesis' in window)) {
+        alert("Speech synthesis is not supported on this browser device.");
+        return;
+      }
+
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        label.textContent = "PLAY TRANSMISSION AUDIO";
+        animateWaveBars(false);
+        return;
+      }
+
+      const fullText = apologyParagraphs.join(" ");
+      const utterance = new SpeechSynthesisUtterance(fullText);
+      utterance.pitch = 0.85;
+      utterance.rate = 0.90;
+
+      utterance.onstart = () => {
+        isSpeaking = true;
+        label.textContent = "STOP TRANSMISSION";
+        animateWaveBars(true);
+      };
+
+      utterance.onend = () => {
+        isSpeaking = false;
+        label.textContent = "PLAY TRANSMISSION AUDIO";
+        animateWaveBars(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    let waveAnimTimer = null;
+    function animateWaveBars(active) {
+      const bars = document.querySelectorAll('#audio-wave-bars span');
+      if (!active) {
+        clearInterval(waveAnimTimer);
+        bars.forEach(b => b.style.height = '4px');
+        return;
+      }
+
+      waveAnimTimer = setInterval(() => {
+        bars.forEach(b => {
+          const h = 4 + Math.random() * 16;
+          b.style.height = `${h}px`;
+        });
+      }, 120);
+    }
+
+    /* ========================================================
+       6. TERMINATION SHOCK CATACLYSM SIMULATION
+       ======================================================== */
+    function initShockChart() {
+      const ctxChart = document.getElementById('shockChart').getContext('2d');
+      const labels = Array.from({length: 37}, (_, i) => `M${i}`);
+      
+      // Stable baseline data (+1.4°C held by aerosol)
+      const baselineData = Array(37).fill(1.4);
+
+      // Rebound simulation curve (flat initially, then spikes dramatically)
+      const shockData = [1.4];
+
+      shockChart = new Chart(ctxChart, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Controlled Veil Baseline (°C)',
+              data: baselineData,
+              borderColor: '#d4a237',
+              borderDash: [5, 5],
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              label: 'Termination Shock Runaway Curve (°C)',
+              data: shockData,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              fill: true,
+              borderWidth: 3,
+              pointRadius: (ctx) => ctx.dataIndex === shockData.length - 1 ? 5 : 0,
+              pointBackgroundColor: '#ef4444'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 8.0,
+              grid: { color: '#17202f' },
+              ticks: { color: '#94a3b8', font: { family: 'monospace' } },
+              title: { display: true, text: 'Global Average Temp Anomaly (°C)', color: '#94a3b8' }
+            },
+            x: {
+              grid: { color: '#17202f' },
+              ticks: { color: '#94a3b8', font: { family: 'monospace' } },
+              title: { display: true, text: 'Months After Fleet Scram', color: '#94a3b8' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#e2e8f0', font: { family: 'monospace', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    const shockMilestones = {
+      0: { title: "MONTH 0: FLEET SCRAM", desc: "Drone flights halted globally. 18.5 Mt sulfate remains in upper stratosphere. Sky remains zinc.", mortality: "Normal" },
+      6: { title: "MONTH 6: VEIL WASHOUT", desc: "Sulfate particles begin coagulating and raining down as acidic mist. Sunlight increases +15%.", mortality: "Elevated" },
+      14: { title: "MONTH 14: THE BLUE RETURNS", desc: "The sky clears to blue for the first time in 40 years, but the unfiltered sun strikes 715 ppm CO2.", mortality: "+2.2°C Surge" },
+      24: { title: "MONTH 24: THERMAL RUNAWAY", desc: "Planetary heating velocity exceeds 0.2°C per month. Boreal forests ignite; permafrost methane erupts.", mortality: "Catastrophic" },
+      36: { title: "MONTH 36: EXTINCTION TERMINAL", desc: "Global temperature hits +6.6°C. Agricultural networks obliterated worldwide.", mortality: "Total Collapse" }
+    };
+
+    function toggleTerminationShockDrill() {
+      if (state.isDrillRunning) {
+        abortTerminationShock();
+        return;
+      }
+
+      state.isDrillRunning = true;
+      state.drillMonth = 0;
+      document.getElementById('btn-shock-label').textContent = "ABORT RUNAWAY SIMULATION";
+      document.getElementById('alarm-banner').classList.remove('hidden');
+      document.getElementById('shock-gauge-card').classList.add('alarm-active');
+      document.getElementById('shock-timeline-badge').textContent = "CRISIS DRILL: ACTIVE";
+      document.getElementById('shock-timeline-badge').className = "font-mono text-xs px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-700 animate-pulse";
+
+      if (!shockChart) initShockChart();
+
+      // Sound siren
+      playBeep(800, 0.4, 'sawtooth');
+
+      state.drillInterval = setInterval(() => {
+        state.drillMonth++;
+
+        // Calculate rebound curve: S-curve spiking from 1.4 to 6.6°C
+        const t = state.drillMonth;
+        const temp = 1.4 + (5.2 / (1 + Math.exp(-0.25 * (t - 16))));
+
+        // Update Chart
+        const currentData = shockChart.data.datasets[1].data;
+        currentData.push(temp);
+        shockChart.update();
+
+        // Update Logs & Metric
+        if (shockMilestones[t]) {
+          document.getElementById('shock-current-month').textContent = shockMilestones[t].title;
+          document.getElementById('shock-current-desc').textContent = shockMilestones[t].desc;
+          document.getElementById('shock-mortality-val').textContent = shockMilestones[t].mortality;
+          document.getElementById('shock-mortality-val').className = "font-bold text-red-400";
+        }
+
+        // AOD drops
+        const aod = Math.max(0.02, 0.24 * (1 - (t / 30)));
+        document.getElementById('shock-aod-val').textContent = `${aod.toFixed(2)} (Aerosols Dissipating)`;
+
+        // Audio klaxon beep
+        playBeep(500 + (t * 20), 0.08, 'sawtooth');
+
+        if (state.drillMonth >= 36) {
+          clearInterval(state.drillInterval);
+          document.getElementById('shock-timeline-badge').textContent = "DRILL COMPLETE // PLANETARY LOSS";
+        }
+      }, 350);
+    }
+
+    function abortTerminationShock() {
+      state.isDrillRunning = false;
+      clearInterval(state.drillInterval);
+      document.getElementById('btn-shock-label').textContent = "INITIATE INJECTION FLEET SHUTDOWN";
+      document.getElementById('alarm-banner').classList.add('hidden');
+      document.getElementById('shock-gauge-card').classList.remove('alarm-active');
+      document.getElementById('shock-timeline-badge').textContent = "STATUS: FLEET RESTORED";
+      document.getElementById('shock-timeline-badge').className = "font-mono text-xs px-2 py-0.5 rounded bg-veil-850 text-veil-sulfur border border-veil-700";
+
+      if (shockChart) {
+        shockChart.data.datasets[1].data = [1.4];
+        shockChart.update();
+      }
+
+      document.getElementById('shock-current-month').textContent = "MONTH 0 (STABLE VEIL)";
+      document.getElementById('shock-current-desc').textContent = "9,420 stratospheric drones restored. Sulfate layer maintained.";
+      document.getElementById('shock-aod-val').textContent = "0.24 (High Reflection)";
+      document.getElementById('shock-mortality-val').textContent = "Baseline (Controlled)";
+      document.getElementById('shock-mortality-val').className = "font-bold text-emerald-400";
+
+      playBeep(440, 0.15, 'sine');
+    }
+
+    /* ========================================================
+       7. SKY COMPARATOR DRAGGABLE SLIDER
+       ======================================================== */
+    function handleCompareSlider(val) {
+      const overlay = document.getElementById('compare-overlay');
+      const handle = document.getElementById('compare-handle');
+      overlay.style.width = `${val}%`;
+      handle.style.left = `${val}%`;
+      playBeep(300 + (val * 4), 0.015, 'triangle');
+    }
+
+    // Interactive Dragging on the container directly
+    const compContainer = document.getElementById('compare-container');
+    let isDraggingComp = false;
+
+    compContainer.addEventListener('mousedown', (e) => {
+      isDraggingComp = true;
+      updateDrag(e);
+    });
+    window.addEventListener('mouseup', () => isDraggingComp = false);
+    window.addEventListener('mousemove', (e) => {
+      if (isDraggingComp) updateDrag(e);
+    });
+
+    function updateDrag(e) {
+      const rect = compContainer.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      x = Math.max(0, Math.min(x, rect.width));
+      const pct = (x / rect.width) * 100;
+      document.getElementById('compare-slider').value = pct;
+      handleCompareSlider(pct);
+    }
+
+    // Initialize Simulator Values on Load
+    updateAtmosphere();
+  </script>
+</body>
+</html>
